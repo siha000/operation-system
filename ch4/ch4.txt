@@ -1,4 +1,0 @@
-                                            ch4 行程管理 process management
-
-1.process跟program區分         process {代表正在執行的程式}
-                               program {代表存放在硬碟的其中一個資料}
