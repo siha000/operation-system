@@ -81,7 +81,7 @@ state循環，最後CPU會呼叫System Call來結束Process
         + 可調控Multiprogramming Dgree，視Memory或CPU使用頻率高或低
         + 可調控I/O Bound 和CPU Bound之混合(可視資源負荷決定載入Job，因為有牽扯Disk) 
  
-+ short-Tern Scheduling(CPU Scheduling)**從Ready Queue中挑選適合Process，獲得CPU Controller**
++ Short-Tern Scheduling(CPU Scheduling)**從Ready Queue中挑選適合Process，獲得CPU Controller**
     + 特徵 :
 
         + 執行頻率最高
@@ -122,8 +122,8 @@ state循環，最後CPU會呼叫System Call來結束Process
 Set指標到新的Process就好，舊的Process的PDB不用Swap Out到Memory中，也不用從Memory中Swap In新Process PDB，所以不
 
 會用到Memory存取
-```
 
+```
 **優點 :速度快**
 
 **缺點 :不適用Register數量少的系統，Register容量小實務上也不常使用此方法**
@@ -147,4 +147,21 @@ Thread之間可以共享Memory(Code Section、Data Section、Open File等)，私
 Process一套Register Set，當ser Process和System Process之間Context Switching時，OS只要改變Register Set指標即可
 ```
 
-### 分派程式
+### 分派程式(Dispatcher)
+
+```
+負責將CPU控制權交給Short-Tern Scheduling所挑出Process功能Model
+
+```
++ 主要工作有三個 :
+
+  + Context Switching
+  + Change User Node From Monitor Mode
+  + 跳到User Process起始位置以便執行(控制權轉移) 
+
++ Dispatcher用來停止一個Process，並開始另一個Process所消耗時間，就是Dispatcher Latency(即上述三個時間加總，又稱分派
+潛伏或分派延遲)  
+
+**Dispatcher Latency Time越短越好，因為時間越短，可以使新的Process執行時間提早(但總體執行時間不變，只是提早執行)**
+
+### CPU Scheduling(CPU排班)
