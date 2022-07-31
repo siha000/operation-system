@@ -18,6 +18,7 @@ ch4 行程控制 process management
     
 + ```program :儲存在Disk中的資料``` 
 
-### 行程狀態圖
+### 行程狀態圖(Process State Transition Diagram)
+![markdown-viewer](pstd.jpg)
      
 
