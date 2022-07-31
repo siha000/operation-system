@@ -72,4 +72,79 @@ state循環，最後CPU會呼叫System Call來結束Process
 + PCB存在User Area 或Monitor Area?
     + ANS :OS為了管理Process方便，會存一份PCB在OS所在Monitor Area中
 
+### 排班程式種類 
++ Long-Tern Scheduling(Job Scheduling)**從Job Queue中挑選適合Job到Memory中執行**
+    + 特徵 :
 
+        + 頻率最低
+        + 通常適用Batch System，但不是用Real-Time System和Time Sharing System(會有不公平現象，以及執行頻率過低無法及時載入Memory中)
+        + 可調控Multiprogramming Dgree，視Memory或CPU使用頻率高或低
+        + 可調控I/O Bound 和CPU Bound之混合(可視資源負荷決定載入Job，因為有牽扯Disk) 
+ 
++ short-Tern Scheduling(CPU Scheduling)**從Ready Queue中挑選適合Process，獲得CPU Controller**
+    + 特徵 :
+
+        + 執行頻率最高
+        + 每個System都需要(因為每個System都需要CPU)
+        + 無法調整Multiprogramming Dgree和I/O Bound、CPU Bound混合(因為是從Memory抓Process到CPU上做執行，無關Disk)
+
++ Meduim-tern Scheduling中程排班程式**當Memory Space不夠，又有Process要進入Memory執行，此時Scheduler必須挑選一些Process將其Swap Out到Disk內，等到Memory中有空間再Swap In進來**
+
+    + 特徵 :
+
+        + 執行頻率介於Long-Time Scheduling和 short-Time Scheduling
+        + 用於Time Sharing System(強調公平，所以每個Process執行時間都相同，當有人超過，Swap Out到Disk內) 
+        + 可調控Multiprogramming Drgee和I/O Bound、CPU Bound比例(當Long-Tern Scheduling出現誤判或I/O Bound、CPU Bound不平衡，可以從此撈)
+
+### Context Switching(內容轉換)
+```
+當CPU使用權從一個Process轉移到另一個Process時，必須將舊的Process的相關資訊(PCB)儲存起來，並將新Process相關資訊
+    
+載到系統中，叫內容轉換
+    
+```
++ Memory會將要執行Process放到CPU的Register，CPU在自行撈資料
+
++ Context Switching所花費時間相對來說較浪費
+    + 在這過程中系統做的事不具生產力
+    + 如果Context Switching次數過多，系統效能可能會不好
+
++ Context Switching效能速度取決於硬體支援程度(Memory速度、Register數量、特殊機器指令等)
+![markdown-viewer](S__44294224.jpg)
+
+### 如何降低Context Switching ?
+
++ 方法一 :提供多套Register
+
+```
+如果Register數量夠多，則每個Process都可以有自己的Register Set，所以要做Context Switching時，OS只要切換Register 
+
+Set指標到新的Process就好，舊的Process的PDB不用Swap Out到Memory中，也不用從Memory中Swap In新Process PDB，所以不
+
+會用到Memory存取
+```
+
+**優點 :速度快**
+
+**缺點 :不適用Register數量少的系統，Register容量小實務上也不常使用此方法**
+
++ 方法二 :改用Thread代替Process
+
+```
+使用Thread(輕量化Process)降低Context Switching負擔，每個Process都有私有訊息(PCB)，這些私有訊息會占用Register，而
+
+Thread之間可以共享Memory(Code Section、Data Section、Open File等)，私有資訊不多，所以從事Context Switching不用
+
+大量Memory Access，可降低Context Switching負擔
+
+```
+
++ 方法三 :Register有限時
+
+```
+當Register有限時，視哪一種Process切換頻繁，User Process和System Process切換頻率最高，因此給User Process和System 
+
+Process一套Register Set，當ser Process和System Process之間Context Switching時，OS只要改變Register Set指標即可
+```
+
+### 分派程式
