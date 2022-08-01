@@ -116,7 +116,7 @@ CH5 執行緒(Thread)
     + 產生一個User Thread時，會連帶產生一個Kernel Thread，而Kernel Thread會對程式執行產生揖謝額外負擔(所以此模式限制Thread個數)
 ![markdown-viewer](S__44310539.jpg)
 
-+  Many-To-Many Model(多對多模式)
++ Many-To-Many Model(多對多模式)
 
     + 多個User Thread可對應到少於或等於User Thread個數的Kernel Threads
 
