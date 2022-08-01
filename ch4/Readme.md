@@ -73,7 +73,7 @@ state循環，最後CPU會呼叫System Call來結束Process
     + ANS :OS為了管理Process方便，會存一份PCB在OS所在Monitor Area中
 
 ### 排班程式種類 
-+ Long-Tern Scheduling(Job Scheduling)**從Job Queue中挑選適合Job到Memory中執行**
++ Long-Tern Scheduling(Job Scheduling)(**從Job Queue中挑選適合Job到Memory中執行**)
     + 特徵 :
 
         + 頻率最低
@@ -81,14 +81,14 @@ state循環，最後CPU會呼叫System Call來結束Process
         + 可調控Multiprogramming Dgree，視Memory或CPU使用頻率高或低
         + 可調控I/O Bound 和CPU Bound之混合(可視資源負荷決定載入Job，因為有牽扯Disk) 
  
-+ Short-Tern Scheduling(CPU Scheduling)**從Ready Queue中挑選適合Process，獲得CPU Controller**
++ Short-Tern Scheduling(CPU Scheduling)(**從Ready Queue中挑選適合Process，獲得CPU Controller**)
     + 特徵 :
 
         + 執行頻率最高
         + 每個System都需要(因為每個System都需要CPU)
         + 無法調整Multiprogramming Dgree和I/O Bound、CPU Bound混合(因為是從Memory抓Process到CPU上做執行，無關Disk)
 
-+ Meduim-tern Scheduling中程排班程式**當Memory Space不夠，又有Process要進入Memory執行，此時Scheduler必須挑選一些Process將其Swap Out到Disk內，等到Memory中有空間再Swap In進來**
++ Meduim-tern Scheduling中程排班程式(**當Memory Space不夠，又有Process要進入Memory執行，此時Scheduler必須挑選一些Process將其Swap Out到Disk內，等到Memory中有空間再Swap In進來**)
 
     + 特徵 :
 
@@ -165,3 +165,184 @@ Process一套Register Set，當ser Process和System Process之間Context Switchi
 **Dispatcher Latency Time越短越好，因為時間越短，可以使新的Process執行時間提早(但總體執行時間不變，只是提早執行)**
 
 ### CPU Scheduling(CPU排班)
+
++ 從行程狀態圖可以看出當CPU IDLE，OS必須從Memory的Ready Queue選一個Process出來
+
++ 從Memory選Process是由Short-Tern Scheduling執行(OS利用CPU Scheduler，從存放Memory中數個準備執行Process挑出一個，透過Dispatcher將CPU配置給它)
+
++ 在CPU排班最主要目的就是讓CPU隨時有一個Process執行，提高CPU Utilization
+
+### Scheduling Criteria(衡量排班準則)
+
++ CPU Utilization(CPU Use Time)/(CPU Use Time+CPU IDLE Time)
+    + CPU Use Time :CPU花在Process時間
+
+    + CPU IDLE Time :CPU花在非執行工作時間
+
++ Throughput(產能) :單位時間能完成Process數
+
++ Waiting Time(等待時間) 
+
+    + Process待在Ready Queue等待CPU時間總數
+    
+    + 一個Process真正受到排班法影響標準
+
++ Turnaround Time(完成時間、回復時間) :一個Task或Process進入System到其完成工作時間
+
++ Response Time(反應時間) 
+
+    + 自User下命令進入System到System產生第一個反應時間
+
+    + 通常User Interactive(用戶互動)，Time Sharing System中較被要求
+
+### 排班目標
+
++ CPU Utilization(CPU利用率)**上升**
+
++ Throughput(產能)**上升**
+
++ Waiting Time(等待時間)**上升**
+
++ Turnaround Time(完成時間)**下降**
+
++ Response Time(反應時間)**下降**
+
++ Resource Utilization(資源利用率)**上升**
+
++ Fair(公平) :Process在Ready Queue排隊會不會被插隊
+
++ No Starvation(飢餓)
+
+### Preemptive(搶先) VS Non Preemptive(不搶先)
+
++ 不可搶先排班(Non Preemptive)
+
+    + 當Process取得CPU執行時，除非此Process自願將CPU釋放(Process結束工作，Wait I/O)，其他Process才有機會取得CPU，Z否則其他Process無法取得CPU控制權
+
+    + 無法強迫該執行Process放棄CPU
+
+    + 在Process STD中，從Running到Blockc/Terminate都是Non Preemptive
+
++ 可搶先排班(preemptive)
+    
+    + 當一個Process取得VPU執行時，可能被迫放棄CPU(High Priority Process進入、中斷發生、CPU Time Slice Expires(CPU執行時間過期)等)，其他Process才有機會取得CPU，否則其他Process無法取得Controler 
+
+    + Process STD中，Running到Ready都是Preemptive
+
+```markdown
+    |  Preemptive                       Non Preemptive                  
+    | :----------------------------     :----------------------------  
+    |  一般而言平均排班效益佳(Waiting     排班效益差(Waiting上升)可能     
+    |  Turnaround Time)下降              護衛效應                        
+    | :---------------------------      :----------------------------                 
+    |  Context Switching次數頻繁         Context Switching次數不頻繁            
+    | :----------------------------     :---------------------------- 
+    |  Process完成時間不可預期            Process完成時間可預期
+    | :----------------------------     :---------------------------- 
+    |  平均等待時間短                     平均等待時間長
+    | :----------------------------     :---------------------------- 
+    |  不會有護衛效應                     有護衛效應
+```
+
+**護衛效應 :當有一個長時間占用CPU的Process，會讓總體執行時間增加**
+
+### Starvation(飢餓現象)
+
+```
+某些Process因長期無法取得足夠CPU服務來完成工作，造成自身無窮停滯狀態
+```
++ 常發生在不公平環境，加上Preemptive則更容易發生
+    
+    + CPU Scheduling Fair :對每個Process分配很平均
+
+    + CPU Scheduling Not Fair :對每個Process分配不平均
+
+    **解決方法 :**
+    
+    + 採用Fair Scheduling Algorithm
+
+    + Aging Technique(老化技術) :系統每隔一段時間，會將待在System內長時間未完成工作Process逐步提高Priority Value
+    ，因此過一段時間後該Process的Priority最高，取得所需資源完成工作(Soft Real Time不適合)
+
+### Scheduling Algorithm(排班演算法)
+
++ First Come First Served Scheduling(FCFS)(先到先做排程)
+   
+    + 特質 :
+        + Arrival Time(到達時間)越早Process越先取得CPU控制權
+        + 簡單、容易製作 
+        + 排班效益最差(Avg.Waiting/Avg Turnaround最長)
+        + 會產生Convoy Effect(護衛效應)，再多組Process均等待一個需要長時間完成工作的Process，造成平均等待時間增加
+        不良現象
+        + Fair
+        + Non Starvation
+        + Non preemptive
+   
+![markdown-viewer](S__44302351.jpg)
+![markdown-viewer](S__44302352.jpg)
+
+
++ Short-Job-First Scheduling(SJF)(最短工作優先排程)
+    + 特質 :
+        + 若Process的CPU Burst Time越少，越先取得CPU控制權
+            1. Avg.Waiting Time和Avg.Turnaround Time最小
+            2. Response Time不保證，可能會被SJF排在後面
+        + 不會有Convoy Effect(因為時間長的Process都被排在後面)
+        + Non Fair(因為SJF偏好短的Process)
+        + 有可能產生Starvation(Long CPU Time Job都被排在後面)
+        + Non Preemptive(可被搶奪的SJF稱SRTF Algorithm)
+        + 不能用在Short Tern Scheduling，因為在SJF中，每個Process的Burst Time都是用預估的，要實際知道下一個CPU 
+        Burst Time很難，然而Short Tern Scheduling執行頻率即高，它動不動就會挑Job，所以很難在短時間內計算每個Process的CPU Burst Time
+        + 可用在Long Tern Scheduling，因為此類執行頻率較低有機會運算
+![markdown-viewer](S__44302353.jpg)
+![markdown-viewer](S__44302355.jpg)
+
++ Short-Remaining-Time-First Scheduling(SRTF)(剩餘時間最短優先)
+    + 特質 :
+        + 為Preemptive SJF Scheduling，當Process的Remaining(剩下)時間最小，可以先取得CPU控制權，即新抵達Process的
+        CPU Burst Time 小於目前正在執行Process的Remaining Time，則執行中的Process會被迫放棄CPU讓新的Process插入
+
+        + Avg.Waiting Time小於SJF Scheduling
+        + Preemptive
+        + Context Switching次數比SJF高
+        + Non Fair
+        + Starvation
+![markdown-viewer](S__44302356.jpg)
+![markdown-viewer](S__44302357.jpg)
+
++ Priority Scheduling(優先權排班)
+    + 特質 :
+        + 具有High Priority Process取得CPU控制權
+        + Non Fair
+        + Starvation
+        + 可以是Preemptive或Non Preemptive
+
+  ```markdown
+    Preemptive :當某個Process到達Ready Queue會和目前Process筆Priority，若新的Process Priority比較高會搶走
+    CPU控制權
+                    
+    Non Preemptive :當新的Process的Priority比目前Process高，在Non Preemptive環境下，只會將新Process
+    放在Ready Queue後端 
+    
+    ```
+    
+    + Priority Scheduling關鍵在於優先權定義
+        + 內部 VS 外部
+            ``` markdown
+             內部 :針對每個Process的資源需求，通常是OS控制，如Memory需求、時間限制、Open File數量
+
+                   假設已到達時間決定優先權，則到達時間小，優先權高(退化成FIFO)
+
+                   假設以CPU Burst Time決定優先權，則CPU Burst Time越小，優先權越高(退化成SJF)
+
+            外部 :針對政策面考量，通常由人控制，如(Process的重要性、支付電腦費用等等)
+            
+            ```
+        
+        + Static VS Dynamic(靜態 VS 動態)
+        ``` markdown
+            Static :當Priority設定給Process後就不能更改，如Soft Real Time System
+
+            Dtnamic :當Priority設定給Process可以依需求更改   
+            
+            ```
