@@ -63,7 +63,7 @@ CH6 死結(Dead Lock)
     + 規定Process可以一次取得完成工作Resource，才允許Process持有資源，否則Process不能持有任何資源
     (若一次全拿，Wait不成立，若全都不拿，Hold不成立)
 
-    + 規定Process在執行時可以池有部分資源，但若要申請新資源，必須先將手上資源釋放，才能申請
+    + 規定Process在執行時可以持有部分資源，但若要申請新資源，必須先將手上資源釋放，才能申請
     (一開始部分拿，Wait不成立，釋放手中資源，Hold不成立)
 
 + 打破Circular Waiting :OS要採取下列措施
@@ -179,9 +179,9 @@ CH6 死結(Dead Lock)
 
     + Finish[i] = False
 
-    + 若找到Goto 3，否則Goto 4
+    + 若找到**Goto 3**，否則**Goto 4**
 
-+ 3.設定Finish[i] = True和Work = Work + Allocation(把資源還給系統)，Goto 2
++ 3.設定Finish[i] = True和Work = Work + Allocation(把資源還給系統)，**Goto 2**
 
 + 4.檢查Finish陣列，若全部都為True，則系統處於Safe State，否則處於Unsafe State
 
@@ -200,7 +200,7 @@ CH6 死結(Dead Lock)
 
     + 1 <= Maxi <= M
 
-    + Max[1...N] <= M+N
+    + Max[1...M] <= M+N
 ![markdown-viewer](S__44326924.jpg)
 
 ### Dead Lock Detection && Recovery(死結偵測和恢復)
