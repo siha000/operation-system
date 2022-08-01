@@ -19,8 +19,23 @@ ch4 行程控制 (process management)
 + ```program :儲存在Disk中的資料``` 
 
 ### 行程狀態圖(Process State Transition Diagram)
-![markdown-viewer](pstd.jpg)
 
++ Process在執行時會改變其狀態，而Process STD則是用以描述Process由開始到結束的Life-Circle，而一個Process會經歷以下
+![markdown-viewer](pstd.jpg)
+    
+```
+1.引入或產生一個新Program到電腦執行
+
+2.從Memory中挑一個Process到CPU上執行
+
+3.一個Process做完工作，正常結束或發生不正常(除0/Overflow)結束做終止
+
+4.發生短暫終止時，會回到Ready Queue狀態
+
+5.發生較長終止時，會將Process Block住(Wait For I/O Complete，Wait For Resource Available)
+``` 
+
+**此STD是針對CPU資源，且Data都在Memory內**
 
 ### 行程排班佇列(Process Scheduling Queue)
 
