@@ -346,3 +346,83 @@ Process一套Register Set，當ser Process和System Process之間Context Switchi
             Dtnamic :當Priority設定給Process可以依需求更改   
             
             ```
+![markdown-viewer](S__44302358.jpg)
+
+
++ Round Robin Scheduling(RR)(循序排班演算法)
+    + 特質 :
+        + OS會規定一個CPU Time Slice，當Process得到CPU控制權，未能在CPU Time Slice執行完成，被迫放棄CPU(Running->Ready)，等待下輪
+        + Fair
+        + Preemptive
+        + Non Starvation
+        + RR的排班效益取決CPU Slice Time定義
+        ``` markdowm
+            CPU Time Slice Large :退化成FIFO
+
+            CPU Time Slice Little :Context Switching太頻繁，CPU Time未真正在使用上，Throughput太低
+
+            因此通常80%工作可以在Time Slice完成最好
+            ```
+    + 製作 :需要Hardware支援(Timer)
+    ```markdown
+    當Process取得CPU後，Timer Initail設為Time Slice值，隨Process執行Timer值逐次減少，
+    
+    當到達0時，會發出Time Out Interrupt通知OS，OS強迫放棄DPU
+    ```
+![markdown-viewer](S__44302359.jpg)
+
++ Multilevel Queue(多層佇列)
+![markdown-viewer](S__44302360.jpg)
+
+    + 每個Queue都有自己的Scheduling Algorithm
+    + Queue和Queue之間採Preemptive Priority之排班方法
+    + 不允許Process在各Queue之間移動
+    
+    + 特質 :
+        + 根據Process不同特性，將Memory中所形成單一Ready Queue分成不同Priority等級Ready Queue
+        + 排班設計/調整靈活度高(可參化項目=>Queue數目、Queue法則、Process放入何種Queue等)
+        + No Fair
+        + Starvation
+        + Preemptive
+
++ Multilevel Feedback Queue(多層回饋佇列)
+
++ 作法:
+    ```markdown
+    採用Aging技術，每隔一段時間，就將Process往上提高到上一層Queue中，所以經過有限時間後，Lower Priority Queue中
+    的Process會被放在High Priority Queue，故無Starvation，也可配合降級動作，當上層Queue中Process取得CPU後，
+    未能在時間內完成工作，則此Process在放棄CPU後，會被放在下層Queue
+    ```
+    + 特質 :
+        + 排班設計/調整靈活高
+        + No Fair
+        + No Starvation
+        + preemptive
+
++ Scheduling Algorithm Summary(概括)
+    + Preemptive
+        + SRJF
+        + RR
+        + Preemptive Priority
+        + Multilevel Queue
+        + Multilevel Feedback Queue
+    
+    + Non Preemptive
+        + FCFS
+        + SJF
+        + Non Preemptive Priority
+    
+    + Non Starvation
+        + FCFS
+        + RR
+        + Multilevel Feedback Queue
+    
+    + Fair
+        + FCFS
+        + RR
+
+    
+**公平可插隊不會Starvation的Scheduling是 Round Robin**
+
+**唯一可插隊不會Starvation的Scheduling是Multilevel feedback Queue**
+
