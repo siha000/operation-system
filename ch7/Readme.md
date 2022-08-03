@@ -440,4 +440,226 @@ T1                                           當Pi未完成執行Pj時，檢查T
         3. 不滿足Bounded Waiting :Pi進入C.S後，想重新進入是可以重複進入的，會有Starvation(用Aging技術解決)
     ```
 
-### Semaphare
+### Semaphare(號誌)
+
+```
+用來解決C.S Design和同步的一種資料結構
+```
+
++ 假設變數S為Semaphore其值為Integer，通常初值為1
+
++ 在S上提供2個Atomic Operations，分別為Wait(S)、Signal(S)
+
+    + **Wait(S)** : While(S <= 0) do no-op，S=S-1
+    
+    + **Signal(S)** :S = S + 1
+
++ 共享變數宣告如下 :Mutex=Semaphore
+
+```
+設計Pi程式設計                     設計Pj的程式設計
+    Repeat:                            Repeat:
+        Wait(Mutex)  //Entry                Wait(Mutex) //Entry
+        C.S                                 C.S
+        Signal(Mutex)  //Exit               Signal(Mutex)   //Exit
+    Until False                        Until False
+```
+
++ 假設Pi和Pj都想進入C.S
+
+```
+                Pi                                   pj
+-----------------------------------------------------------------
+T0      Pi搶到Wait(Mutex)指令
+        S = S - 1，Pi進入C.S
+T1                                      當Pi未執行完，Pj想Entry，S=0，
+                                        被卡在Wait(Mutex)
+```
+
+```
+1. 滿足Mutual Exclusion :同一時間只有一組Process進入C.S
+
+2. 滿足Progress :只有想進入C.S的Process會執行Wait(Mutex)，在有限時間內一定有人進入C.S
+
+3. 不滿足Bounded Waiting :若Pi執行完畢有可能又可以馬上重新進入自己C.S
+
+```
+
+### 簡單同步問題
+
++ 假設P1和P2兩個Current Execution的Process如下，規定P1要在P2敘述之前執行，利用Semaphore滿足
+
+```
+宣告一個共享變數 S :Semaphore，初值 = 0
+
+        P1                    P2
+--------------------------------------------        假設P1先執行那沒問題，但是如果P2先執行會卡在do no-op
+                            Wait(S)                 等S > 0時才會執行
+                             C.S
+       C.S
+    Signal(S)
+```
+
+### 著名同步問題
+
++ 生產者/消費者問題 (Producer/Consumer Problem)
+
+    + 生產者/消費者主要分成2個process，分別為
+
+        + 消費者行程 :用來產生資訊
+
+        + 消費者行程 :用來消耗生產者產生資訊
+
+    + 為了讓生產者行程和消費者行程能順利進行，必須有一個緩衝區(Buffer)，讓生產者存放資料，消費者消耗資料，這兩者
+    要同步，不然會發生以下狀況
+
+        + 消費者在緩衝區還能消費
+
+        + 生產者在緩衝區滿時還能持續放資料
+
+![markdown-viewer](S__44367877.jpg)
+
++ 這個緩衝區可分成2種
+
+    + 無限緩衝區
+
+        + 當Consumer在這個緩衝區時沒有任何資料時須等待
+
+        + Producer因為沒有空間限制，可以無限制的產生資訊，對Producer沒差
+
+    + 有限緩衝區
+
+        + 當Consumer在緩衝區沒有任何資訊需等待
+
+        + Producer有空間限制，當Buffer滿時，Producer要休息，等Consumer來消耗這些Resource
+
++ 有3個共享變數如下 :
+
+    + Mutex : Semaphore(對Buffer提供互斥控制，初值 = 1)
+
+    + Entry : Semaphore(紀錄Buffer內有空格數，初值 = N)
+
+    + Full : Semaphore(紀錄Buffer內有資料存在格數，初值 = 0)
+
+    ```
+    Producer設計                                        Consumer設計
+        Repeat:                                             Repeat:
+            Producer an item in nextp                           Producer an item in nextp
+            Wait(Enpty) //提出有Data想Enpty                      Wait(Full)
+            Wait(Mutex) //互斥                                   Wait(Mutex)
+            Add nextp to Buffer //執行Data Entry                 Remove item from Buffer
+            Signal(Mutex) //解互斥                               Signal(Mutex)
+            Signal(Full)                                        Signal(Full)
+
+        Until False                                         Until False
+    ```
+
+### 哲學家晚餐問題(Dinner Philosophers Problem)
+
++ 有5位哲學家和5支筷子，當哲學家思考時，就不會用餐，若哲學家想用餐，需要依序取用左右兩邊的筷子才能用餐
+
+![markdown-viewer](S__44367878.jpg)
+
++ 利用Semaphore設計宣告變數 **Chopstick[0~4]，初值 = 1**
+
+```
+某哲學家設計
+    Repeat:
+        Wait(Chopstick[i])                      此程式設計並不正確，有Dead Lock存在
+        Wait(Chopstick[i + 1] % 5)              若每位哲學家先拿起左邊筷子，就會拿不
+        Eating                                  到右邊筷子，全部都卡在Wait()
+        Signal(Chopstick[i])
+        Signal(Chopstick[i + 1] % 5)
+
+    Until False
+```
+
++ 解決方法 :
+
+    + 方法一 :
+        
+    ```
+        最多允許4位哲學家同時用餐，即限制同時用餐人數，避免Dead Lock(Avoidance定理)
+
+        1. 1 <= Max i < =m
+
+        2. Max[1...n] <= m+n
+
+        已知m = 5，Max i = 2，條件1滿足，愈滿足條件2，則可得 2n < 5+n，n最大值 = 4 
+    ``` 
+
+    **此方法雖然沒有Dead Lock，但有Starvation(因為一次只能4個哲學家用餐)**
+
+    + 方法二 :規定除非哲學家可以順利取得2邊筷子，否則不能拿起，即打破Hold And Wait
+
+    + 方法三 :採用非對稱法，即奇數先拿左邊再拿右邊，偶數先拿右再拿左，即打破Circulur Waiting
+
+    + 方法四 :用Monitor處理
+
+### Semaphore缺點 
+
+```
+若Programmer誤用Wait和Signal運作，可能會有錯誤發生(違反Mutual Exclusion造成Dead Lock)
+```
+
++ Ex1 : Semaphore = 1
+
+```
+程式設計如下 : Signal(S)                 會讓一堆Process各自進入自己C.S，違反Mutual Exclusion
+                C.S
+              Wait(S)
+                R.S   
+```
+
++ Ex2 : Semaphore = 1
+
+```
+程式設計如下 : Wait(S)                  會讓其他Process卡在第一個Wait指令，Dead Lock產生
+                C.S
+              Signal(S)
+                R.S
+```
+
++ Ex3 : Semaphore = 1
+
+```
+程式設計如下 :
+
+            P1                  P2
+T0 :      Wait(S)
+
+T1:                            Wait(Q)              形成Dead Lock
+
+T2:       Wait(Q)              
+
+T3:                           Wait(S)
+           
+           C.S                 C.S
+         
+         Signal(S)           Signal(Q)
+         
+         Signal(Q)           Signal(S)
+
+```
+
+### Monitor
+
++ 為了解決同步問題的高階資料結構，由三個部分組成
+
+    + 一組Procedure (Operation) :供外界呼叫使用
+
+    + 共享變數區 :此區會宣告一些共享變數，只提供給Monitor各Procedure共用，外界Process不能使用
+
+    + 初始區 :設定某些共享變數
+
++ Monitor本身已經確保互斥的性質，即每次只允許一個Process在Monitor內，當某個Process在執行Monitor內某個Procedure時，其他Process不可呼叫/執行Monitor內任何Procedure，須等到該Process執行完此Procedure，離開Monitor或因同步條件成立/不成立而被Block為止，保證共享資料區內共享變數不會有Race Condition
+
+**優點 :Programmer不用額外花費負擔處理互斥問題，有更多心力解決同步問題**
+
++ 利用Monitor解決同步問題流程
+
+    + 根據問題定義Monitor
+
+    + 使用Monitor :利用定義Monitor，宣告一個變數，撰寫Process i程式片段
+
++ 
