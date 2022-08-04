@@ -662,4 +662,345 @@ T3:                           Wait(S)
 
     + 使用Monitor :利用定義Monitor，宣告一個變數，撰寫Process i程式片段
 
-+ 
+### 定義Monitor
+
+```
+Type Monitor_Name=Monitor //共享變數宣告
+
+Procedure Entry O1 //外部Process可呼叫
+    Begin
+    ......
+    End
+
+Procedure On //不可呼叫外部
+    Begin
+    ......
+    End
+
+Begin               //初始區
+    Initialization
+End
+
+```
+
++ 為了解決同步問題，Monitor提供一種特殊形態變數供Programmer使用 :**Condition型態變數**
+
+假設宣告X為Condition型態變數，X = Condition，在X變數上提供兩種Atomic Operations
+
+```
+X.Wait :強迫Process暫停，並把該Process放入X的Waiting Queue中
+
+X.Signal :如果有Process卡在X.Wait的Waiting Queue中，則此運作會從該Waitinf Queue中取第一個Process將其Wake Up
+，否則Signal沒作用
+
+``` 
+
+### 利用Monitor解決哲學家問題
+
++ 定義Monitor
+
+```
+Type Dinner-Ph=Monitor
+
+var State = Array[0 ~ 4] of Thinking Hungry Eating
+
+var Self = Array[0 ~ 4] of Condition
+
+Procedure Entry Pickup(i = 0 ~ 4)
+Begin
+    State[i]=Hungry //哲學家提出請求
+    Text(i) //檢查有無符合
+    if(State[i] != Eating)  //不符合就去Waiting Queue
+    {
+        Slef[i].Wait
+    }
+End
+
+Procedure Entry PutDown(i = 0 ~ 4)
+Begin
+    State[i] = Thinking //完成請求
+    Text((i+4) % 5) //查看左邊有沒有請求
+    Text((i+1) % 5)//查看右邊有沒有請求
+
+End
+
+Procedure Text(k = 0 ~ 4)
+Begin
+    if(State[k + 4] % 5 != Eating && State == Hungry && State[k + 1] % 5 != Eating)
+    {
+        //當哲學家提出申請且左右都無需求
+        State[k] = Eating    //哲學家狀態改變
+        Slef[k].signal      //將哲學家喚醒
+    }
+End
+
+Begin
+    for(i=0;i <= 4;i++)
+    {
+        State[i] = Thinking //哲學家初始值設為無需求
+    }
+End
+```
+
+```
+資料區 :每個哲學家有3種不同State(Hungry、Thinking、Eating)，當哲學家搶不到筷子情況(Condition)的同步處理
+
+初始區 :每個Process初值 = Thinking，不用對Condition變數設定初值，沒必要一開始就卡住哲學家
+
+程式區 :每個Procedure的輸入參數為哲學家編號
+
+        1.在哲學家i拿起筷子時(Pickup)，，先將自己設成Hungry，在Text左右兩側的人是否Eating
+
+            是 :代表搶不到2隻筷子，將自己卡住(Wait)去Sleep
+
+            否 :將自己設為Eating，若哲學家先前搶不到筷子而被卡住(Wait)，則會被喚醒(Signal)，否則Signal指令沒用，
+                因為被卡住哲學家不會卡住自己，要等其他哲學家Putdowm時再嘗試喚醒
+        
+        2. 哲學家i(Putdown)時，將自己State設為Thinking，在Text左右兩側因我Eating卡這的人，若有解救他們
+
+```
+
++ 使用Monitor
+
+    + 宣告共享變數 Dp=Dinner-Ph
+    ```
+        Repeat:
+            Dp.Pickup(i)
+            .....
+            Eating
+            .....
+            DP.Putdown(i)
+        Until False
+    ```
+
+### Message Passing(訊息傳送)
+
++ 2個Process要溝通需要遵守以下
+
+    + Communication建立
+
+    + 互傳訊息(Message)
+
+    + 傳輸完畢，Release Link
+
++ 提供兩種操作
+
+    + Send() 傳送方
+
+    + Receive() 接收方
+
++ 分成兩種
+
+    + Direct Communication(直接聯繫)
+
+    + Indirect Communication(間接聯繫)
+
+### 直接聯繫(Direct Communication)
+
++ 有以下特性
+
+    + 要相互聯繫的Process之間Communication Link是自動產生，若要進行通訊，2個process只需要知道對方ID即可
+
+    + 一條Link只能提供2個Process使用，其他Process不能使用
+
+    + 進行通訊的兩個Process之間有一條Link
+
++ Direct Communication分成兩種
+
+    + Symmetric(對稱)
+
+    + Asymmetric(非對稱)
+
++ 在Symmetric的Direct Communication中
+
+```
+1. 每個Process要先確認接收者和傳送者名稱，即接收者和傳送者聯繫時要互相指名(位址確認)
+
+2. Send和Receive運算如下 :
+
+    Send(P,Message) :傳送一個Message給Process P
+
+    Receive(Q,Message) :自Process Q接收一個Message
+
+    若這2個指令之間指名參數無法搭配，Link無法建立
+```
+
++ 在Asymmetric的Direct Communication中
+
+```
+1. 只有發送者Process要先確認接收方名稱，而接收者不用指出發送者名稱
+
+2. Send和Receive運算如下
+
+    Send(P,Message) :傳送一個Message給Process P
+
+    Receive(ID,Message) :任何Process都可以接收，接收後ID = 傳送方
+
+    只要有人傳訊息來就好，接收方不在意是誰
+```
+
++ 不論是Symmetric或Asymmetric，當CAHANGE一個Process名稱後，就要對其他所有Process檢查，若發現和此Process有關舊名稱，
+則須全部改成新名稱，即Process模組性受限
+
+```
+Ex :如何利用Direct Communication的Message Passing(Symmetric)解決Producer/Consumer Problem ?
+
+                Producer                           Consumer
+        -----------------------------------------------------------------
+        Producer an item in nextp           Receive(Producer,nextp)
+        Send(Consumer,nextp)                Consumer the item in nextp
+```
+
+### 間接聯繫(Indirect Communication)
+
++ 溝通雙方要透過Mailbox(信箱)來傳送訊息
+
++ Send和Receive運算如下 (A為Mailbox)
+
+    + Send(A,Message) :傳送Message到Mailbox
+
+    + Receive(A,Message) :從Mailbox接收Message
+
++ 具有以下特性
+
+    + 具有共用Mailbox的一對Process才能建立Link
+
+    + 一條Link可以連到2個以上Process，指不同對Process的Link可共用一個Mailbox
+
+    + 進行通訊兩個Process間，可以有多條不同Link，每個Link都對應一個Mailbox
+
+```
+        Direct Communication                Indirect Communication
+    -----------------------------------------------------------------
+        雙方要互相指名才可溝通               雙方要有共同Mailbox才可溝通
+    -----------------------------------------------------------------
+        溝通的Communication Link            Communication Link(Mailbox)
+        屬於雙方，其他Process不能用         可被多對Process共享
+    -----------------------------------------------------------------
+        同一對Process只能有一對Link         溝通雙方可以有多條Link
+```
+
+### Message Passing例外狀況處理
+
++ 由於Message Passing這種Proceess通訊管理，是由OS負責提供相關控制，因此要考慮一些例外狀況
+
++ 行程結束(Process Terminate) :不論接收者Q或傳送者P在訊息處理完成前都有可能結束，使Q接收不到訊息或P等不到訊息
+
+    + 狀況一 :接收者Q可能正在等待已被終止Process P訊息，如果不對Q採取行動，Q會造成無限Block(P->Q)P死了Q不知道
+
+        ```  
+        處理 :  1. OS終止Process Q
+                2. OS通知Process Q說Process P已經結束
+        ```
+
+    + 狀況二 :傳送者P可能正要傳送一個訊息給被終止Process Q
+
+    ```
+        1. 在自動緩衝(Automatic-Buffering)技巧，Process P並無大礙
+
+        2. 在沒有緩衝下，Process P要等到Process Q回應才可繼續工作，造成Process P Block住(Q死了P不知道)
+    ```
+
+    + 處理 : 
+
+        + OS終止Process P
+
+        + OS通知Process P說Process Q結束
+
++ 訊息遺失(Message Lost) :由於硬體或通訊線路故障，使傳送者P往接收者Q的訊息遺失
+
+    + 有兩個工作要做，偵測是否遺失，遺失是否要重送
+
+    + 處理這事件有三種基本方法
+
+        + 由OS負責偵測訊息是否遺失，若有需要OS重新傳送 (OS負擔高)
+
+        + 由傳送者Process負責偵測，若有需要Process重新傳送 (Process負擔高)
+
+        + 由OS負責偵測訊息是否遺失，若有需要OS告知Process，由Process自行重新傳送 (較常用)
+
++ 如何偵測Message Lost ?
+
+    + 使用Time Out(限時法)
+
+    + 當一個Message發出後，會有一個確認(Acknowledgement ;ACK)訊息送回來，OS或Process可以規定一個時間間隔T，
+    若在此時間T未能收到ACK訊息(大於 2T 時間)，OS或Process可以假設訊息已經遺失，P會重送
+
+    + 但有些訊息並未遺失，只是因為網路傳輸時間比規定時間長，此時同樣訊息會Copy很多份在Internet上流動，這時Recieve
+    Q必須能區分這些訊息備份
+
+### 補充
+
+### Link   Capacity(Link容量)
+
++ Queue容量分3種
+
+    + Zero Capacity(只有一組容量一進一出)
+
+    + Bounded Capacity(有限容量)
+
+    + Unbounded Capacity(無限容量)
+
++ 由於Message Passing得Link Capacity，得知Message是等待(Blocking)或非等待(Non Blocking)，也可稱同步或非同步
+
+    + 等待傳送(Blocking Send) :Sender會等待Recieve或Mailbox接收到訊息為止
+
+    + 非等待傳送(NonBlocking Send) :Sender送出訊息後繼續運作
+
+    + 等待接收(Blocking Recieve) :Recieve會等待，直到收到訊息才會往下執行
+
+    + 非等待接收(NonBlocking Recieve) :Recieve收到有限或無效訊息都可執行
+
++ 當接收和傳送2者皆為等待時，傳送者和接收方就會有Blocking
+
++ 在Zero Capacity中，為了保持同步，必須要Wait架構
+
+![markdown-viewer](S__44433433.jpg)
+
+### Semaphore類型
+
++ Binaary Semaphore(二元號誌) :在正常使用下Semaphore的值只有0或1不會有其他
+
+    + 假設Semaphore初值 = 1，Wait和Signal定義如下
+
+    ```
+        Wait(S)
+          C.S
+        Signal(S)
+          R.S
+    ```
+
+    + 缺點 :不知道有多少Process卡在Wait(S)中
+
++ Counting Semaphore(計數號誌) :Semaphore數值不只可以0或1，也可以負數，若Semaphore值為-N，表示有N個Process卡在Wait
+
+
+    + Wait和Signal實作方法有兩種
+
+        + Binary Semaphore
+
+        + 利用Suspended/Wake Up System Call + Queue
+
++ 利用Binary Semaphore實作Counting Semaphore
+
+```
+宣告共享變數 : C :存放整數型態，初值 = 1，為計數號誌的號誌值
+             S1 :存放2元號誌值，初值 = 1，為C進行互斥存取
+             S2 :存放2元號誌值，初值 = 0，當C < 0強迫Process暫停
+
+
+    Pi的程式設計                    
+        Repeat                      Wait(C)內部:                    Signal(C)內部 :
+            Wait(C)                     Wait(S1)                        Wait(S1)
+              C.S                       C = C - 1                       C = C + 1
+            Signal(C)                   if(C < 0)                       if(C <= 0)
+              R.S                       {                               {
+        Until False                         Signal(S1)                     Signal(S2)
+                                            Wait(S2)                    }
+                                        }                               Signal(S1)
+                                        else
+                                        {
+                                            Signal(S1)
+                                        }
+              
+```
