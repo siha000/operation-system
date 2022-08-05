@@ -1002,5 +1002,9 @@ Ex :如何利用Direct Communication的Message Passing(Symmetric)解決Producer/
                                         {
                                             Signal(S1)
                                         }
-              
+        
+        讓每個有需求的Process都可以進入Wait，利用C變數去存取有幾組Process需求，再用S2去互斥
+
+        只有一組Process可以進入Signal，進入後C-1扣一組Process起來，如果C <= 0，把S2設為1讓其
+        它Process有機會進入自己C.S
 ```
