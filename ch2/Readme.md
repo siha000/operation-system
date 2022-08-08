@@ -263,7 +263,78 @@ ex :CPU Process要30秒執行時間，DMA Controller要5秒，若CPU先執行 CP
 -----------------------------------------------
         容量大                容量小
 ```
+### 磁碟(Magnetic Disks)
 
++ 磁碟每個Disk，都被邏輯性的劃分成數個磁軌(Track)，而每個磁軌又被劃分成數個磁區(Sector)
 
++ 磁碟裝置和電腦間資料傳送是由磁碟Controller決定，要完成一個磁碟的I/O動作，電腦利用訊息方式將命令傳送到磁碟Controller中，由磁碟Controller操作磁碟機硬體，以完成命令
 
++ 在磁碟Controller中，通常有一個內附Controller，磁碟機的資料傳送是由資料從磁碟表面移到Register中，再由Register將資料傳送到電腦
 
+### 磁碟存取時間(Disk Access Time)
+
++ 磁碟存取時間是由三個時間所加成
+
+    + 尋找時間(Seek Time) :將Read/Write的Head移到指定Track上方所花費時間
+
+    + 旋轉潛伏時間(Rotational Latency Time) :將欲Access的Sector轉到Read/Write Head下方所花費時間
+
+    + 傳輸時間(Transfer Time) :資料在Disk和Memory之間傳輸時間
+
+**以上動作由Seek Time花費最多時間(機械動作)**
+
+### I/O結構(I/O Structure)
+
++ 當User Process發出I/O請求後系統控制權多久會交還給User Process，即User Process可不可以繼續執行下去?
+
++ I/O Structure有兩種架構
+
+![markdown-viewer](S__44670978.jpg)
+
++ 同步I/O架構(Synchronous I/O Structure)
+
+    + 當I/O運作完成後，才將控制權還給User Process
+
+    + Process可藉由Busy Waiting Loop或特殊Wait指令達到目的
+
+**優點 :在一段時間只會有一個I/O請求，當I/O Complete中斷產生時，OS即知道是何種Device發出**
+
+**缺點 :不支援I/O處理**
+
++ 非同步I/O架構(Asynchronous I/O Structure)
+
+    + 立刻將控制權還給User Process，不用等I/O運作完成
+
+    + 在一段時間內可以有多個I/O Request同時發生
+
+    + OS必須有一個Device Status Table，以記錄各種Device位址、使用狀況、位於某個Device的I/O請求狀況
+
+### 硬體保護
+
++ 基礎設施
+
+    + 雙模式運作(Dual Mode Operation)
+
+    + 特權指令(Privileged Instruction)
+
++ 三種硬體保護
+
+    + I/O保護(I/O Protection) :防止User Program直接使用I/O Device
+
+    + 記憶體保護(Memory Protection) :防止User Program誤用Memory空間(系統區域或其他Program所在區域)
+
+    + CPU保護(CPU Protection) :防止User Program無限期占用CPU
+
++ 實施Protection前提
+
+    + 系統必須是Dual Mode
+    
+    + 必須將會引起系統危害指令設為特權指令
+
+### 雙模式運作(Dual Mode Operation)
+
++ Monitor Mode(監督模式)
+
+    + OS的System Process可以執行狀態，在此模式下，OS掌控對系統控制權只有OS的工作可以運行，User Program不允許對此Mode工作
+
+    + 
