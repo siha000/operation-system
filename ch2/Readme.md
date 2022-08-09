@@ -234,15 +234,15 @@ ex :CPU Process要30秒執行時間，DMA Controller要5秒，若CPU先執行 CP
 
 + Write Through :一旦Cache內容被更新，立即寫回Memory內
 
-**優點 :Cache和Main Memory內容一致**
+    **優點 :Cache和Main Memory內容一致**
 
-**缺點 :耗時，喪失Cache Memory好處(如果Write指令頻繁)**
+    **缺點 :耗時，喪失Cache Memory好處(如果Write指令頻繁)**
 
 + Write Back :當Cache內容要被置換出去時，才更改Main Memory內容
 
-**優點 :節省時間**
+    **優點 :節省時間**
 
-**缺點 :Cache可能和Main Memory資料不一致**
+    **缺點 :Cache可能和Main Memory資料不一致**
 
 ```
 在多重處理器(Multiprocessor)環境下，由於不同行程和處理器都能併行執行同一個工作，如果一個正在處理資料被更新，更新後資
@@ -297,9 +297,9 @@ ex :CPU Process要30秒執行時間，DMA Controller要5秒，若CPU先執行 CP
 
     + Process可藉由Busy Waiting Loop或特殊Wait指令達到目的
 
-**優點 :在一段時間只會有一個I/O請求，當I/O Complete中斷產生時，OS即知道是何種Device發出**
+    **優點 :在一段時間只會有一個I/O請求，當I/O Complete中斷產生時，OS即知道是何種Device發出**
 
-**缺點 :不支援I/O處理**
+    **缺點 :不支援I/O處理**
 
 + 非同步I/O架構(Asynchronous I/O Structure)
 
@@ -337,4 +337,155 @@ ex :CPU Process要30秒執行時間，DMA Controller要5秒，若CPU先執行 CP
 
     + OS的System Process可以執行狀態，在此模式下，OS掌控對系統控制權只有OS的工作可以運行，User Program不允許對此Mode工作
 
-    + 
+    + 又稱Supervisor Mode、System Mode、Kernel Mode
+
+    + 在此Mode才可以執行**特權指令**(Privileged Instruction)
+
++ User Mode(使用者模式)
+
+    + User Program在此模式下允許被執行，即User Program可執行時系統State
+
+    + 在此Mode下不可執行特權指令，否則會引起非法指令錯誤，產生錯誤中斷(Trap)，OS會強制Process停止
+
+### 硬體對Dual Mode製作支援
+
+```
+Dual Mode需要硬體額外支援，即提供一個模式位元(Mode Bit)用以區分2種模式，0代表Monitor，1代表User Mode
+```
+
+### Dual Mode目的
+
++ 對重要HW資源實施管控
+
++ 將可能會引發系統危害指令設為特權指令，由於User和User Mode下無法執行特權指令，故可防止User Program執行對系統或其他User Program造成危害
+
+### 特權指令種類
+
++ I/O指令
+
++ 和記憶體管理相關暫存器修改指令
+
++ 和Timer設定相關指令
+
++ Enable/Disable Interrupt指令
+
++ 系統停止(Halt)指令
+
++ 從User Mode改變到Monitor Mode指令
+
+### I/O保護(I/O Protection)
+
++ 防止User Program在執行時，直接利用I/O Device，User Program必須透過OS提出I/O申請，再交由OS控制I/O運作並將I/O請求告知User Program
+
++ 執行流程
+
+    + 發出I/O請求，即System Call，會伴隨一些Trap，以轉換Mode
+
+    + 執行相對應I/O服務
+
+    + I/O回傳結果給OS
+
+    + OS將結果回傳給User Program
+
+![markdown-viewer](S__44670986.jpg)
+
++ I/O保護做法需要靠下列機制配合實現
+
+    + 系統必須Dual Mode
+
+    + 所有I/O指令為特權指令(怕被User Program更改)
+
+    + 必須保護Interrupt Vector和ISR所在Memory Area不被User Program更改，防止User Program在Monitor Mode下取得System控制權
+
+### Dynamic Blinding簡介
+
++ Blinding(繫結) :決定程式執行起始位置，即程式在Memory哪個Area開始執行，當程式開始執行，起始位置也被決定，連帶程式內資料和變數所處Memory也決定
+
++ Blinding的時期有三個
+
+    + Compiling Time(編輯時期)
+
+    + Loading Time(載入時期)
+
+    + Execution(執行時期)
+
+![markdown-viewer](S__44687362.jpg)
+
+**Dynamic Blinding在Execution Time決定程式起始位置，表示程式在執行時間可以更改位置**
+
+### 記憶體保護(Memory Protection)
+
+```
+保護執行中的程式或OS不會被其他程式干擾
+
+```
+
++ Monitor Area的保護 :保護Monitor(OS)所在Area不會被User Program更改
+
++ 對各User Area的保護 :對各User Program所在Memory Area進行保護，防止User Program之間企圖更改其他User Program所在Memory Area
+
++ Monitor Area作法
+
+    + 方法1 :Fence Register(界限暫存器)用來紀錄OS大小(Limit)
+
+![markdown-viewer](S__44687364.jpg)
+
++ User Program執行時，會對欲存取Memory做以下流程
+
+![markdown-viewer](S__44687365.jpg)
+
++ 將要修改或設定成Fence Register指令設為特權指令
+
++ 若OS所在Area大小動態改變，會造成User Process的執行起始位置有所改變，此時所有User Program需重新定址
+
++ 需靠Dynamic Blinding支援，且Execution Performance(執行效能)變差
+
+```
+為甚麼OS Area會改變?
+
+1. OS中通常有許多錯誤處理程序，但不會一次載到Memory中(只載入幾個常用的)
+
+2. 當有一個錯誤發生時，而OS在Memory找不到對應程序時，就會利用Dynamic Blinding方式從Disk中載入相對應程序，所以OS大小
+會改變
+
+```
+
++ 方法2 :Monitor Area由低擺到高，User Area由高擺到低
+
+![markdown-viewer](S__44687366.jpg)
+
+### 各User Area保護
+
++ 使用一套Register實作
+
+    + Base Register用來記錄User Program起始位置
+
+    + Limit Register用來記錄User Program大小
+
+![markdown-viewer](S__44687367.jpg)
+
++ User Program執行時會對欲存取Memory Address做下列檢查
+
+![markdown-viewer](S__44687368.jpg)
+
++ 要將修改Base/Limit Register指令改成特權指令
+
+### CPU保護
+
++ 防止User Program長期甚至無窮霸佔CPU不釋放狀況
+
++ OS會規定一個User Program使用CPU Time合理最大值，一旦Process取得控制會將此值設定給Timer(計時器)，隨著Process執行，Timer Value會逐漸減到0，此時Timer會發出一個Time Out的Interrupt通知OS，OS可以強迫Process放棄CPU
+
++ Timer值必須設成特權指令
+
+### Timer用途
+
++ CPU Protection(CPU保護)
+
++ Timer Share System(分時系統)即Round Robin Scheduling
+
++ DMA Controller設定中，傳輸量(Counter)大小設定
+
++ Clock(系統時間)
+    
+
